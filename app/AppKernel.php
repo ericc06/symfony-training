@@ -1,4 +1,5 @@
 <?php
+
 // app/AppKernel.php
 
 use Symfony\Component\HttpKernel\Kernel;

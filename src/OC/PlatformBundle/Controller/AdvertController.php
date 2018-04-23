@@ -35,14 +35,14 @@ class AdvertController extends Controller
 
         // Si la page n'existe pas, on retourne une 404
         if ($page > $nbPages) {
-            throw $this->createNotFoundException("La page ".$page." n'existe pas.");
+            throw $this->createNotFoundException('La page '.$page." n'existe pas.");
         }
 
         // On donne toutes les informations nécessaires à la vue
         return $this->render('OCPlatformBundle:Advert:index.html.twig', array(
         'listAdverts' => $listAdverts,
-        'nbPages'     => $nbPages,
-        'page'        => $page,
+        'nbPages' => $nbPages,
+        'page' => $page,
         ));
     }
 
@@ -72,7 +72,7 @@ class AdvertController extends Controller
         ;
 
         return $this->render('OCPlatformBundle:Advert:view.html.twig', array(
-            'advert'           => $advert,
+            'advert' => $advert,
             'listApplications' => $listApplications,
             'listAdvertSkills' => $listAdvertSkills,
         ));
@@ -82,29 +82,18 @@ class AdvertController extends Controller
     {
         // On crée un objet Advert
         $advert = new Advert();
-        
+
         $form = $this->createForm(AdvertType::class, $advert);
 
-        // Si la requête est en POST
-        if ($request->isMethod('POST')) {
-            // On fait le lien Requête <-> Formulaire
-            // À partir de maintenant, la variable $advert contient les valeurs
-            // entrées dans le formulaire par le visiteur
-            $form->handleRequest($request);
+        if ($request->isMethod('POST') && $form->handleRequest($request)->isValid()) {
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($advert);
+            $em->flush();
 
-            // On vérifie que les valeurs entrées sont correctes
-            // (Nous verrons la validation des objets en détail dans le prochain chapitre)
-            if ($form->isValid()) {
-                // On enregistre notre objet $advert dans la base de données, par exemple
-                $em = $this->getDoctrine()->getManager();
-                $em->persist($advert);
-                $em->flush();
+            $request->getSession()->getFlashBag()->add('notice', 'Annonce bien enregistrée.');
 
-                $request->getSession()->getFlashBag()->add('notice', 'Annonce bien enregistrée.');
-
-                // On redirige vers la page de visualisation de l'annonce nouvellement créée
-                return $this->redirectToRoute('oc_platform_view', array('id' => $advert->getId()));
-            }
+            // On redirige vers la page de visualisation de l'annonce nouvellement créée
+            return $this->redirectToRoute('oc_platform_view', array('id' => $advert->getId()));
         }
 
         // À ce stade, le formulaire n'est pas valide car :
@@ -154,7 +143,7 @@ class AdvertController extends Controller
         // - Soit la requête est de type POST, mais le formulaire contient des valeurs invalides, donc on l'affiche de nouveau
         return $this->render('OCPlatformBundle:Advert:edit.html.twig', array(
             'form' => $form->createView(),
-            'advert' => $advert
+            'advert' => $advert,
         ));
     }
 
@@ -174,7 +163,7 @@ class AdvertController extends Controller
         }
 
         $em->flush();
-        
+
         return $this->render('OCPlatformBundle:Advert:delete.html.twig');
     }
 
@@ -190,7 +179,7 @@ class AdvertController extends Controller
         );
 
         return $this->render('OCPlatformBundle:Advert:menu.html.twig', array(
-        'listAdverts' => $listAdverts
+        'listAdverts' => $listAdverts,
         ));
     }
 }

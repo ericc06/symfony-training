@@ -20,14 +20,14 @@ class ImageType extends AbstractType
         //->add('url', TextType::class)
         //->add('alt', TextType::class);
     }
-          
+
     /**
      * {@inheritdoc}
      */
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults(array(
-            'data_class' => 'OC\PlatformBundle\Entity\Image'
+            'data_class' => 'OC\PlatformBundle\Entity\Image',
         ));
     }
 
