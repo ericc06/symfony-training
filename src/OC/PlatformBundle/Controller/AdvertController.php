@@ -116,26 +116,13 @@ class AdvertController extends Controller
 
         $form = $this->createForm(AdvertEditType::class, $advert);
 
-        // Si la requête est en POST
-        if ($request->isMethod('POST')) {
-            // On fait le lien Requête <-> Formulaire
-            // À partir de maintenant, la variable $advert contient les valeurs
-            // entrées dans le formulaire par le visiteur
-            $form->handleRequest($request);
+        if ($request->isMethod('POST') && $form->handleRequest($request)->isValid()) {
+            $em->flush();
 
-            // On vérifie que les valeurs entrées sont correctes
-            // (Nous verrons la validation des objets en détail dans le prochain chapitre)
-            if ($form->isValid()) {
-                // On enregistre notre objet $advert dans la base de données, par exemple
-                $em = $this->getDoctrine()->getManager();
-                $em->persist($advert);
-                $em->flush();
+            $request->getSession()->getFlashBag()->add('notice', 'Annonce bien enregistrée.');
 
-                $request->getSession()->getFlashBag()->add('notice', 'Annonce bien enregistrée.');
-
-                // On redirige vers la page de visualisation de l'annonce nouvellement créée
-                return $this->redirectToRoute('oc_platform_view', array('id' => $advert->getId()));
-            }
+            // On redirige vers la page de visualisation de l'annonce nouvellement créée
+            return $this->redirectToRoute('oc_platform_view', array('id' => $advert->getId()));
         }
 
         // À ce stade, le formulaire n'est pas valide car :
@@ -147,24 +134,33 @@ class AdvertController extends Controller
         ));
     }
 
-    public function deleteAction($id)
+    public function deleteAction($id, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
 
         $advert = $em->getRepository('OCPlatformBundle:Advert')->find($id);
 
+        // On crée un formulaire vide, qui ne contiendra que le champ CSRF
+        // Cela permet de protéger la suppression d'annonce contre cette faille
+        $form = $this->get('form.factory')->create();
+
         if (null === $advert) {
             throw new NotFoundHttpException("L'annonce d'id ".$id." n'existe pas.");
         }
 
-        // On boucle sur les catégories de l'annonce pour les supprimer
-        foreach ($advert->getCategories() as $category) {
-            $advert->removeCategory($category);
+        if ($request->isMethod('POST') && $form->handleRequest($request)->isValid()) {
+            $em->remove($advert);
+            $em->flush();
+
+            $request->getSession()->getFlashBag()->add('notice', 'Annonce supprimée.');
+
+            return $this->redirectToRoute('oc_platform_home');
         }
 
-        $em->flush();
-
-        return $this->render('OCPlatformBundle:Advert:delete.html.twig');
+        return $this->render('OCPlatformBundle:Advert:delete.html.twig', array(
+            'form' => $form->createView(),
+            'advert' => $advert
+        ));
     }
 
     public function menuAction($limit)
