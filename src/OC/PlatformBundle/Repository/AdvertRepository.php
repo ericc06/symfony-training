@@ -10,23 +10,35 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
 
 class AdvertRepository extends EntityRepository
 {
+    public function getAdvertsBefore(\Datetime $date)
+    {
+        return $this->createQueryBuilder('a')
+      ->where('a.updatedAt <= :date')                      // Date de modification antérieure à :date
+      ->orWhere('a.updatedAt IS NULL AND a.date <= :date') // Si la date de modification est vide, on vérifie la date de création
+      ->andWhere('a.applications IS EMPTY')                // On vérifie que l'annonce ne contient aucune candidature
+      ->setParameter('date', $date)
+      ->getQuery()
+      ->getResult()
+      ;
+    }
+
     public function getAdverts($page, $nbPerPage)
     {
         $query = $this->createQueryBuilder('a')
-        ->leftJoin('a.image', 'i')
-        ->addSelect('i')
-        ->leftJoin('a.categories', 'c')
-        ->addSelect('c')
-        ->orderBy('a.date', 'DESC')
-        ->getQuery()
-        ;
+      ->leftJoin('a.image', 'i')
+      ->addSelect('i')
+      ->leftJoin('a.categories', 'c')
+      ->addSelect('c')
+      ->orderBy('a.date', 'DESC')
+      ->getQuery()
+    ;
 
         $query
-        // On définit l'annonce à partir de laquelle commencer la liste
-        ->setFirstResult(($page - 1) * $nbPerPage)
-        // Ainsi que le nombre d'annonce à afficher sur une page
-        ->setMaxResults($nbPerPage)
-        ;
+      // On définit l'annonce à partir de laquelle commencer la liste
+      ->setFirstResult(($page - 1) * $nbPerPage)
+      // Ainsi que le nombre d'annonce à afficher sur une page
+      ->setMaxResults($nbPerPage)
+    ;
 
         // Enfin, on retourne l'objet Paginator correspondant à la requête construite
         // (n'oubliez pas le use correspondant en début de fichier)
@@ -37,9 +49,9 @@ class AdvertRepository extends EntityRepository
     {
         // Méthode 1 : en passant par l'EntityManager
         $queryBuilder = $this->_em->createQueryBuilder()
-        ->select('a')
-        ->from($this->_entityName, 'a')
-        ;
+      ->select('a')
+      ->from($this->_entityName, 'a')
+    ;
         // Dans un repository, $this->_entityName est le namespace de l'entité gérée
         // Ici, il vaut donc OC\PlatformBundle\Entity\Advert
 
@@ -65,9 +77,9 @@ class AdvertRepository extends EntityRepository
 
         // On peut ajouter ce qu'on veut avant
         $qb
-        ->where('a.author = :author')
-        ->setParameter('author', 'Marine')
-        ;
+      ->where('a.author = :author')
+      ->setParameter('author', 'Marine')
+    ;
 
         // On applique notre condition sur le QueryBuilder
         $this->whereCurrentYear($qb);
@@ -76,9 +88,9 @@ class AdvertRepository extends EntityRepository
         $qb->orderBy('a.date', 'DESC');
 
         return $qb
-        ->getQuery()
-        ->getResult()
-        ;
+      ->getQuery()
+      ->getResult()
+    ;
     }
 
     public function getAdvertWithCategories(array $categoryNames)
@@ -87,9 +99,9 @@ class AdvertRepository extends EntityRepository
 
         // On fait une jointure avec l'entité Category avec pour alias « c »
         $qb
-        ->innerJoin('a.categories', 'c')
-        ->addSelect('c')
-        ;
+      ->innerJoin('a.categories', 'c')
+      ->addSelect('c')
+    ;
 
         // Puis on filtre sur le nom des catégories à l'aide d'un IN
         $qb->where($qb->expr()->in('c.name', $categoryNames));
@@ -97,17 +109,17 @@ class AdvertRepository extends EntityRepository
 
         // Enfin, on retourne le résultat
         return $qb
-        ->getQuery()
-        ->getResult()
-        ;
+      ->getQuery()
+      ->getResult()
+      ;
     }
 
     protected function whereCurrentYear(QueryBuilder $qb)
     {
         $qb
-        ->andWhere('a.date BETWEEN :start AND :end')
-        ->setParameter('start', new \Datetime(date('Y').'-01-01')) // Date entre le 1er janvier de cette année
-        ->setParameter('end', new \Datetime(date('Y').'-12-31'))   // Et le 31 décembre de cette année
-        ;
+      ->andWhere('a.date BETWEEN :start AND :end')
+      ->setParameter('start', new \Datetime(date('Y').'-01-01')) // Date entre le 1er janvier de cette année
+      ->setParameter('end', new \Datetime(date('Y').'-12-31'))   // Et le 31 décembre de cette année
+    ;
     }
 }
